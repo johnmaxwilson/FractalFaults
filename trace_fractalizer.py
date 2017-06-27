@@ -7,6 +7,7 @@ Created on Mon Oct 26 11:58:49 2015
 
 import numpy as np
 import matplotlib.pyplot as plt
+from geographiclib.geodesic import Geodesic
 from scipy.optimize import curve_fit
 import sys, os
 
@@ -35,7 +36,7 @@ def fractalize(phis, lams, phif, lamf, interdist = 6.0, beta=2.0, rough = 5.0): 
     walk = np.fft.irfft(np.hstack(([0],twalk)), length)
     
     walk = walk - ((walk[-1]-walk[0])/length*count + walk[0]) #connect endpoints
-    walk = walk[1:-1]/np.std(walk)*(walkstd*1000)             #scale displacement to given std
+    walk = walk[1:-1]/np.std(walk)*(rough*1000)             #scale displacement to given std
     
     
     interlats = []
@@ -53,22 +54,20 @@ def fractalize(phis, lams, phif, lamf, interdist = 6.0, beta=2.0, rough = 5.0): 
     return newlats, newlons
 
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     
     beta_param = 2.5
     
     beta_filestr = str(beta_param).replace('.', '-')
     
     
-    TRACE_DIR = "/home/jmwilson/VirtQuake/fractals/flat/traces/"
-    OUTPUT_DIR= "/home/jmwilson/VirtQuake/fractals/fract"+beta_filestr+"/traces/"
+    TRACE_DIR = "/home/jmwilson/VirtQuake/fractals/flat/Traces/"
+    OUTPUT_DIR= os.path.join("/home/jmwilson/VirtQuake/fractals", "fract"+beta_filestr, "traces")
     
     #TRACE_DIR = "/home/jmwilson/VirtQuake/VQModels/UCERF3/Traces/original_faultwise/"
     #OUTPUT_DIR= "/home/jmwilson/VirtQuake/VQModels/UCERF3/Traces/fractalized/beta"+beta_filestr"/"
     
     numcopies = 1
-    
-    
     
     #input_trace = open("traces/singleFault_trace.txt", "r")
     trace_list = os.listdir(TRACE_DIR)
@@ -91,6 +90,8 @@ if __name__ = "__main__":
         trace_array = np.array(trace)
         trace_rec = np.core.records.fromarrays(trace_array.T, names=tracerec_names)
         
+        #np.genfromtxt(input_trace, dtype=[('lat','f8'),('lon','f8'), ('alt','f8'), ('depth','f8'),('slip_rate','f8'), ('aseismic','f8'), ('rake','f8'), ('dip','f8'), ('lame_mu','f8'), ('lame_lambda','f8')], comments='#', skip_header=1)
+        
         
         for j in range(numcopies):
             newtrace = np.zeros(shape=(10,1)) #initialize newtrace with the right shape
@@ -98,7 +99,7 @@ if __name__ = "__main__":
             #For each pair of sequential trace points, fractalize the coords between them, and linear interpolate all other values
             
             for i in range(len(trace_rec)-1):
-                newlats, newlons = tools.fractalize(trace_rec['lat'][i], trace_rec['lon'][i], trace_rec['lat'][i+1], trace_rec['lon'][i+1], interdist=6.0, beta=beta_param, walkstd=5.0)
+                newlats, newlons = fractalize(trace_rec['lat'][i], trace_rec['lon'][i], trace_rec['lat'][i+1], trace_rec['lon'][i+1], interdist=6.0, beta=beta_param, rough=5.0)
                 
                 lerpsize = len(newlats)
                 altlerp = lerp(trace_rec['alt'][i], trace_rec['alt'][i+1], lerpsize)
