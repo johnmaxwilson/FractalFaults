@@ -16,6 +16,8 @@ def lerp(start, end, num):
     x = np.linspace(0, num, num+1)[:-1]
     return slope*x+start
 
+def const_fit(x, r0):
+    return r0
 
 def fractalize(phis, lams, phif, lamf, interdist = 6.0, beta=2.0, rough = 5.0): #interdist expected in units of km
     
@@ -32,11 +34,14 @@ def fractalize(phis, lams, phif, lamf, interdist = 6.0, beta=2.0, rough = 5.0): 
     count = np.arange(length)
     freq = np.array(np.fft.rfftfreq(length), dtype=np.float)[1:]
     twhite = np.fft.rfft(white)[1:]
-    twalk = twhite*(1./freq**(beta/2.0))
+    
+    popt, pcov = curve_fit(const_fit, freq, scipytwhite**2)    
+    R_0 = popt[0]
+    
+    twalk = twhite*(rough/R_0*freq**(-beta/2.0))
     walk = np.fft.irfft(np.hstack(([0],twalk)), length)
     
     walk = walk - ((walk[-1]-walk[0])/length*count + walk[0]) #connect endpoints
-    walk = walk[1:-1]/np.std(walk)*(rough*1000)             #scale displacement to given std
     
     
     interlats = []
