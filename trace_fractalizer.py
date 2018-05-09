@@ -35,7 +35,7 @@ def fractalize(phis, lams, phif, lamf, interdist = 6.0, beta=2.0, rough = 5.0): 
     freq = np.array(np.fft.rfftfreq(length), dtype=np.float)[1:]
     twhite = np.fft.rfft(white)[1:]
     
-    popt, pcov = curve_fit(const_fit, freq, twhite**2)    
+    popt, pcov = curve_fit(const_fit, freq, np.abs(twhite)**2)    
     R_0 = popt[0]
     
     twalk = twhite*(np.sqrt(rough/R_0)*freq**(-beta/2.0))
